@@ -1,6 +1,20 @@
-import { Shield, GraduationCap } from "lucide-react";
+import { Shield, GraduationCap, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function Header() {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error(`Sign out failed: ${error.message}`);
+    } else {
+      toast.success("Signed out successfully");
+    }
+  };
+
   return (
     <header className="relative overflow-hidden">
       {/* Background with subtle pattern */}
@@ -39,7 +53,7 @@ export function Header() {
                 <Shield className="w-5 h-5" />
                 <span className="font-semibold">Administrator Portal</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-2">
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'long',
                   year: 'numeric', 
@@ -47,6 +61,22 @@ export function Header() {
                   day: 'numeric' 
                 })}
               </p>
+              {user && (
+                <div className="border-t border-border pt-2 mt-2">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {user.email}
+                  </p>
+                  <Button
+                    onClick={handleSignOut}
+                    size="sm"
+                    variant="outline"
+                    className="clay-card text-xs h-7"
+                  >
+                    <LogOut className="w-3 h-3 mr-1" />
+                    Sign Out
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
