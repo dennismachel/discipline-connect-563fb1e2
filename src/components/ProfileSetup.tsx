@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Building2 } from 'lucide-react';
+import { User, Building } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProfileSetupProps {
@@ -16,7 +16,7 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
   const { profile, updateProfile, loading } = useProfile();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
-    school_name: profile?.school_name || '',
+    department: profile?.department || '',
     role: profile?.role || 'user'
   });
   const [saving, setSaving] = useState(false);
@@ -71,14 +71,14 @@ export const ProfileSetup = ({ onComplete }: ProfileSetupProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="school_name">School Name</Label>
+            <Label htmlFor="department">Department</Label>
             <div className="relative">
-              <Building2 className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+              <Building className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
-                id="school_name"
-                value={formData.school_name}
-                onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
-                placeholder="Enter your school name"
+                id="department"
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                placeholder="Enter your department"
                 className="pl-10"
               />
             </div>

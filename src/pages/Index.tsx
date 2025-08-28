@@ -71,9 +71,9 @@ const Index = () => {
                   : "Welcome! You can add disciplinary offenses and view analytics for your assigned area."
                 }
               </p>
-              {profile.school_name && (
+              {profile.department && (
                 <p className="text-sm text-primary mt-2 font-medium">
-                  {profile.school_name}
+                  {profile.department}
                 </p>
               )}
             </CardContent>
