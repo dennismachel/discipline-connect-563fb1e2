@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      offense_records: {
+        Row: {
+          created_at: string
+          id: string
+          offense_description: string | null
+          offense_type: string
+          recorded_by: string
+          student_class: string
+          student_grade: number
+          student_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offense_description?: string | null
+          offense_type: string
+          recorded_by: string
+          student_class: string
+          student_grade: number
+          student_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offense_description?: string | null
+          offense_type?: string
+          recorded_by?: string
+          student_class?: string
+          student_grade?: number
+          student_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

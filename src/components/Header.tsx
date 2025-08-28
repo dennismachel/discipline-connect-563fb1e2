@@ -1,4 +1,4 @@
-import { Shield, GraduationCap, LogOut, User, Settings, BarChart3 } from "lucide-react";
+import { Shield, GraduationCap, LogOut, User, Settings, BarChart3, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,15 @@ export function Header() {
               >
                 <BarChart3 className="w-3 h-3 mr-1" />
                 Analytics
+              </Button>
+              <Button
+                variant={location.pathname === "/student-records" ? "default" : "outline"}
+                size="sm"
+                onClick={() => navigate("/student-records")}
+                className="text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Records
               </Button>
             </div>
 

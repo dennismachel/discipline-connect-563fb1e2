@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Calendar, AlertTriangle, Users, Clock } from "lucide-react";
 
 export interface OffenseRecord {
@@ -38,13 +40,7 @@ const offenseTypes = [
   "Other"
 ];
 
-const grades = [
-  "7th Grade", 
-  "8th Grade",
-  "9th Grade",
-  "10th Grade",
-  "11th Grade"
-];
+const grades = [7, 8, 9, 10, 11];
 
 const studentClasses = [
   "Barbados",
@@ -58,18 +54,18 @@ const studentClasses = [
 
 export function OffenseForm({ onAddOffense }: OffenseFormProps) {
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
     studentName: "",
     offenseType: "",
     studentGrade: "",
     studentClass: "",
-    suspensionDays: 0,
-    comments: ""
+    offenseDescription: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.offenseType || !formData.studentGrade || !formData.studentName || !formData.studentClass) {
@@ -81,35 +77,77 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
       return;
     }
 
-    const newOffense: OffenseRecord = {
-      id: crypto.randomUUID(),
-      date: formData.date,
-      studentName: formData.studentName,
-      offenseType: formData.offenseType,
-      studentGrade: formData.studentGrade,
-      studentClass: formData.studentClass,
-      suspensionDays: formData.suspensionDays,
-      comments: formData.comments,
-      timestamp: Date.now()
-    };
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to record offenses.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    onAddOffense(newOffense);
-    
-    // Reset form
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      studentName: "",
-      offenseType: "",
-      studentGrade: "",
-      studentClass: "",
-      suspensionDays: 0,
-      comments: ""
-    });
+    setIsSubmitting(true);
 
-    toast({
-      title: "Offense Recorded",
-      description: "The disciplinary offense has been successfully recorded.",
-    });
+    try {
+      const { error } = await supabase
+        .from('offense_records')
+        .insert({
+          student_name: formData.studentName,
+          student_grade: parseInt(formData.studentGrade),
+          student_class: formData.studentClass,
+          offense_type: formData.offenseType,
+          offense_description: formData.offenseDescription,
+          recorded_by: user.id
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to record offense. Please try again.",
+          variant: "destructive"
+        });
+        console.error("Error inserting record:", error);
+        return;
+      }
+
+      // Create local record for immediate UI update
+      const newOffense: OffenseRecord = {
+        id: crypto.randomUUID(),
+        date: new Date().toISOString().split('T')[0],
+        studentName: formData.studentName,
+        offenseType: formData.offenseType,
+        studentGrade: `Grade ${formData.studentGrade}`,
+        studentClass: formData.studentClass,
+        suspensionDays: 0,
+        comments: formData.offenseDescription,
+        timestamp: Date.now()
+      };
+
+      onAddOffense(newOffense);
+      
+      // Reset form
+      setFormData({
+        studentName: "",
+        offenseType: "",
+        studentGrade: "",
+        studentClass: "",
+        offenseDescription: ""
+      });
+
+      toast({
+        title: "Offense Recorded",
+        description: "The disciplinary offense has been successfully recorded.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Unexpected error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,37 +160,20 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="date" className="flex items-center gap-2 text-sm font-medium">
-                <Calendar className="w-4 h-4" />
-                Date of Offense
-              </Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="clay-input"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="studentName" className="flex items-center gap-2 text-sm font-medium">
-                <Users className="w-4 h-4" />
-                Student Name
-              </Label>
-              <Input
-                id="studentName"
-                type="text"
-                value={formData.studentName}
-                onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                className="clay-input"
-                placeholder="Enter student name"
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="studentName" className="flex items-center gap-2 text-sm font-medium">
+              <Users className="w-4 h-4" />
+              Student Name
+            </Label>
+            <Input
+              id="studentName"
+              type="text"
+              value={formData.studentName}
+              onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+              className="clay-input"
+              placeholder="Enter student name"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,8 +188,8 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {grades.map((grade) => (
-                    <SelectItem key={grade} value={grade}>
-                      {grade}
+                    <SelectItem key={grade} value={grade.toString()}>
+                      Grade {grade}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -215,38 +236,26 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="suspension-days" className="flex items-center gap-2 text-sm font-medium">
-              <Clock className="w-4 h-4" />
-              Suspension Days
-            </Label>
-            <Input
-              id="suspension-days"
-              type="number"
-              min="0"
-              max="30"
-              value={formData.suspensionDays}
-              onChange={(e) => setFormData({ ...formData, suspensionDays: parseInt(e.target.value) || 0 })}
-              className="clay-input"
-              placeholder="Enter number of suspension days"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="comments" className="text-sm font-medium">
-              Comments
+            <Label htmlFor="offense-description" className="text-sm font-medium">
+              Offense Description
             </Label>
             <Textarea
-              id="comments"
-              value={formData.comments}
-              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+              id="offense-description"
+              value={formData.offenseDescription}
+              onChange={(e) => setFormData({ ...formData, offenseDescription: e.target.value })}
               className="clay-input min-h-[100px]"
-              placeholder="Additional details about the offense..."
+              placeholder="Provide details about the offense..."
             />
           </div>
 
-          <Button type="submit" className="clay-primary w-full py-3 text-lg font-semibold">
-            Record Offense
+          <Button 
+            type="submit" 
+            className="clay-primary w-full py-3 text-lg font-semibold"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Recording..." : "Record Offense"}
           </Button>
+
         </form>
       </CardContent>
     </Card>
