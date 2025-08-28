@@ -8,11 +8,12 @@ import { Shield, GraduationCap, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Auth = () => {
-  const { user, signInWithGoogle, signInWithEmail, signUp } = useAuth();
+  const { user, signInWithGoogle, signInWithEmail, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,6 +31,26 @@ const Auth = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isForgotPassword) {
+      if (!email) {
+        toast.error('Please enter your email address');
+        return;
+      }
+      
+      setLoading(true);
+      const { error } = await resetPassword(email);
+      setLoading(false);
+      
+      if (error) {
+        toast.error(`Password reset failed: ${error.message}`);
+      } else {
+        toast.success('Password reset link sent to your email');
+        setIsForgotPassword(false);
+      }
+      return;
+    }
+
     if (!email || !password) {
       toast.error('Please enter both email and password');
       return;
@@ -133,16 +154,18 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                {!isForgotPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
                 
                 <Button 
                   type="submit" 
@@ -150,16 +173,36 @@ const Auth = () => {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+                  {loading ? 'Please wait...' : 
+                    isForgotPassword ? 'Send Reset Link' :
+                    isSignUp ? 'Create Account' : 'Sign In'
+                  }
                 </Button>
                 
-                <div className="text-center">
+                <div className="text-center space-y-2">
+                  {!isForgotPassword && (
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-sm text-muted-foreground hover:text-primary hover:underline block mx-auto"
+                    >
+                      Forgot your password?
+                    </button>
+                  )}
+                  
                   <button
                     type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
+                    onClick={() => {
+                      if (isForgotPassword) {
+                        setIsForgotPassword(false);
+                      } else {
+                        setIsSignUp(!isSignUp);
+                      }
+                    }}
                     className="text-sm text-primary hover:underline"
                   >
-                    {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+                    {isForgotPassword ? 'Back to sign in' :
+                     isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
                   </button>
                 </div>
               </form>
