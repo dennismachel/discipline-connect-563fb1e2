@@ -1,13 +1,92 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OffenseRecord } from "./OffenseForm";
 import { Calendar, Users, Clock, MessageSquare, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 
 interface OffenseHistoryProps {
   offenses: OffenseRecord[];
 }
 
+interface DatabaseOffenseRecord {
+  id: string;
+  student_name: string;
+  student_grade: number;
+  student_class: string;
+  offense_type: string;
+  offense_description: string | null;
+  created_at: string;
+  recorded_by: string;
+  profiles?: {
+    full_name: string | null;
+  } | null;
+}
+
 export function OffenseHistory({ offenses }: OffenseHistoryProps) {
+  const { user } = useAuth();
+  const { isAdmin } = useProfile();
+  const [dbOffenses, setDbOffenses] = useState<DatabaseOffenseRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOffenseHistory();
+  }, [user, isAdmin]);
+
+  const fetchOffenseHistory = async () => {
+    if (!user) return;
+
+    try {
+      let query = supabase
+        .from('offense_records')
+        .select(`
+          *,
+          profiles!offense_records_recorded_by_fkey(full_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      // If not admin, only show records created by the current user
+      if (!isAdmin()) {
+        query = query.eq('recorded_by', user.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching offense history:', error);
+        return;
+      }
+
+      setDbOffenses((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching offense history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Combine local offenses with database offenses
+  const allOffenses = [
+    ...offenses,
+    ...dbOffenses.map(dbOffense => ({
+      id: dbOffense.id,
+      date: new Date(dbOffense.created_at).toISOString().split('T')[0],
+      studentName: dbOffense.student_name,
+      offenseType: dbOffense.offense_type,
+      studentGrade: `Grade ${dbOffense.student_grade}`,
+      studentClass: dbOffense.student_class,
+      suspensionDays: 0, // Default for now
+      comments: dbOffense.offense_description || '',
+      timestamp: new Date(dbOffense.created_at).getTime()
+    }))
+  ];
+
+  // Remove duplicates based on timestamp (in case same record exists in both)
+  const uniqueOffenses = allOffenses.filter((offense, index, self) => 
+    index === self.findIndex(o => o.timestamp === offense.timestamp)
+  );
   const getSeverityBadge = (suspensionDays: number) => {
     if (suspensionDays === 0) return "clay-badge clay-badge-success";
     if (suspensionDays <= 3) return "clay-badge clay-badge-warning";
@@ -30,15 +109,23 @@ export function OffenseHistory({ offenses }: OffenseHistoryProps) {
   };
 
   // Calculate stats
-  const totalOffenses = offenses.length;
-  const totalSuspensionDays = offenses.reduce((sum, offense) => sum + offense.suspensionDays, 0);
-  const mostCommonOffense = offenses.length > 0 ? 
-    offenses.reduce((acc, offense) => {
+  const totalOffenses = uniqueOffenses.length;
+  const totalSuspensionDays = uniqueOffenses.reduce((sum, offense) => sum + offense.suspensionDays, 0);
+  const mostCommonOffense = uniqueOffenses.length > 0 ? 
+    uniqueOffenses.reduce((acc, offense) => {
       acc[offense.offenseType] = (acc[offense.offenseType] || 0) + 1;
       return acc;
     }, {} as Record<string, number>) : {};
   
   const topOffense = Object.entries(mostCommonOffense).sort(([,a], [,b]) => b - a)[0];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -92,7 +179,7 @@ export function OffenseHistory({ offenses }: OffenseHistoryProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {offenses.length === 0 ? (
+          {uniqueOffenses.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Calendar className="w-12 h-12 text-muted-foreground" />
@@ -102,7 +189,7 @@ export function OffenseHistory({ offenses }: OffenseHistoryProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {offenses
+              {uniqueOffenses
                 .sort((a, b) => b.timestamp - a.timestamp)
                 .map((offense) => (
                   <div

@@ -1,81 +1,47 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
-import { useProfile } from "@/hooks/useProfile";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Search, Filter, Calendar, GraduationCap, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Search, Filter, Users, Calendar, FileText, Trash2, Edit } from "lucide-react";
+import { useOffenseRecords, DatabaseOffenseRecord } from "@/hooks/useOffenseRecords";
+import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 
-interface OffenseRecord {
-  id: string;
-  student_name: string;
-  student_grade: number;
-  student_class: string;
-  offense_type: string;
-  offense_description: string;
-  recorded_by: string;
-  created_at: string;
-  profiles?: {
-    full_name: string;
-  } | null;
-}
-
-const StudentRecords = () => {
-  const [records, setRecords] = useState<OffenseRecord[]>([]);
-  const [filteredRecords, setFilteredRecords] = useState<OffenseRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function StudentRecords() {
+  const { isAdmin } = useProfile();
+  const { records, loading, deleteRecord } = useOffenseRecords();
+  const [filteredRecords, setFilteredRecords] = useState<DatabaseOffenseRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
-  const { profile, isAdmin } = useProfile();
 
   const classes = ["Barbados", "Cuba", "Dominica", "Grenada", "Jamaica", "St. Lucia", "Trinidad & Tobago"];
   const grades = [7, 8, 9, 10, 11];
 
-  useEffect(() => {
-    fetchRecords();
-  }, []);
-
+  // Filter records based on search term, grade, and class
   useEffect(() => {
     filterRecords();
-  }, [records, searchTerm, selectedGrade, selectedClass]);
+  }, [searchTerm, selectedGrade, selectedClass, records]);
 
-  const fetchRecords = async () => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('offense_records')
-        .select(`
-          *,
-          profiles!recorded_by (
-            full_name
-          )
-        `)
-        .order('created_at', { ascending: false });
+  const handleDeleteRecord = async (id: string) => {
+    if (!isAdmin()) {
+      toast.error("Only administrators can delete records");
+      return;
+    }
 
-      if (error) {
-        toast.error("Failed to fetch records");
-        console.error("Error fetching records:", error);
-        return;
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      try {
+        await deleteRecord(id);
+        toast.success("Record deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete record");
+        console.error("Error deleting record:", error);
       }
-
-      setRecords((data as any[])?.map(item => ({
-        ...item,
-        profiles: item.profiles && typeof item.profiles === 'object' && 'full_name' in item.profiles 
-          ? item.profiles 
-          : null
-      })) || []);
-    } catch (error) {
-      toast.error("Error loading records");
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -103,17 +69,14 @@ const StudentRecords = () => {
     setFilteredRecords(filtered);
   };
 
-  const getOffenseTypeBadgeVariant = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'minor':
-        return 'secondary';
-      case 'major':
-        return 'destructive';
-      case 'severe':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
+  // Helper function to get badge variant based on offense type
+  const getOffenseTypeBadgeVariant = (offenseType: string) => {
+    const severeOffenses = ['Fighting', 'Vandalism', 'Academic Dishonesty'];
+    const majorOffenses = ['Insubordination', 'Inappropriate Language'];
+    
+    if (severeOffenses.includes(offenseType)) return 'destructive';
+    if (majorOffenses.includes(offenseType)) return 'default';
+    return 'secondary';
   };
 
   if (loading) {
@@ -138,15 +101,15 @@ const StudentRecords = () => {
           <Card className="clay-card">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Users className="w-6 h-6 text-primary" />
+                <FileText className="w-6 h-6 text-primary" />
                 <div>
-                  <CardTitle className="text-2xl">Student Records</CardTitle>
-                  <CardDescription>
+                  <h1 className="text-2xl font-bold">Student Records</h1>
+                  <p className="text-muted-foreground">
                     {isAdmin() 
                       ? "View all disciplinary offense records across the school system"
                       : "View disciplinary offense records for your assigned area"
                     }
-                  </CardDescription>
+                  </p>
                 </div>
               </div>
             </CardHeader>
@@ -157,12 +120,16 @@ const StudentRecords = () => {
         <div className="max-w-6xl mx-auto mb-6">
           <Card className="clay-card">
             <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="search" className="text-sm font-medium mb-2 block">
+                    Search Records
+                  </Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
-                      placeholder="Search by student name or offense type..."
+                      id="search"
+                      placeholder="Student name or offense type..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -170,11 +137,11 @@ const StudentRecords = () => {
                   </div>
                 </div>
                 
-                <div className="flex gap-4">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Grade Filter</Label>
                   <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                    <SelectTrigger className="w-32">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Grade" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Grades" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Grades</SelectItem>
@@ -185,11 +152,13 @@ const StudentRecords = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
 
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Class Filter</Label>
                   <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger className="w-40">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Class" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Classes" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Classes</SelectItem>
@@ -211,56 +180,53 @@ const StudentRecords = () => {
           <Card className="clay-card">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
+                <h2 className="text-xl font-semibold">
                   Disciplinary Records ({filteredRecords.length})
-                </CardTitle>
+                </h2>
                 <div className="text-sm text-muted-foreground">
-                  Total records: {records.length}
+                  Total: {records.length} records
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Offense Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Recorded By</TableHead>
-                      <TableHead>Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRecords.length === 0 ? (
+              {filteredRecords.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No Records Found</h3>
+                  <p className="text-muted-foreground">
+                    {searchTerm || selectedGrade !== "all" || selectedClass !== "all"
+                      ? "Try adjusting your search filters"
+                      : "No disciplinary records have been created yet"
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          No records found matching your criteria
-                        </TableCell>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Grade</TableHead>
+                        <TableHead>Class</TableHead>
+                        <TableHead>Offense Type</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Recorded By</TableHead>
+                        <TableHead>Date</TableHead>
+                        {isAdmin() && <TableHead>Actions</TableHead>}
                       </TableRow>
-                    ) : (
-                      filteredRecords.map((record) => (
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRecords.map((record) => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-muted-foreground" />
-                              {record.student_name}
-                            </div>
+                            {record.student_name}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                              Grade {record.student_grade}
-                            </div>
+                            <Badge variant="outline">Grade {record.student_grade}</Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-muted-foreground" />
-                              {record.student_class}
-                            </div>
-                          </TableCell>
+                          <TableCell>{record.student_class}</TableCell>
                           <TableCell>
                             <Badge variant={getOffenseTypeBadgeVariant(record.offense_type)}>
                               {record.offense_type}
@@ -274,24 +240,33 @@ const StudentRecords = () => {
                           <TableCell>
                             {record.profiles?.full_name || "Unknown"}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              {format(new Date(record.created_at), "MMM dd, yyyy")}
-                            </div>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(record.created_at).toLocaleDateString()}
                           </TableCell>
+                          {isAdmin() && (
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteRecord(record.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </main>
     </div>
   );
-};
-
-export default StudentRecords;
+}
