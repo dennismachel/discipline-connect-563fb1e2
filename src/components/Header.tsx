@@ -1,14 +1,17 @@
-import { Shield, GraduationCap, LogOut, User, Settings } from "lucide-react";
+import { Shield, GraduationCap, LogOut, User, Settings, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function Header() {
   const { user, signOut } = useAuth();
   const { profile, isAdmin } = useProfile();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -50,6 +53,27 @@ export function Header() {
                   <GraduationCap className="w-4 h-4 text-primary" />
                 </div>
               </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant={location.pathname === "/" ? "default" : "outline"}
+                size="sm"
+                onClick={() => navigate("/")}
+                className="text-xs"
+              >
+                Dashboard
+              </Button>
+              <Button
+                variant={location.pathname === "/analytics" ? "default" : "outline"}
+                size="sm"
+                onClick={() => navigate("/analytics")}
+                className="text-xs"
+              >
+                <BarChart3 className="w-3 h-3 mr-1" />
+                Analytics
+              </Button>
             </div>
 
             <div className="clay-card p-4 text-center">

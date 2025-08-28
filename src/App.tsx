@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Analytics from "./pages/Analytics";
 import { AuthGuard } from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -18,6 +19,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/analytics" element={
+            <AuthGuard>
+              <Analytics />
+            </AuthGuard>
+          } />
           <Route path="/" element={
             <AuthGuard>
               <Index />
