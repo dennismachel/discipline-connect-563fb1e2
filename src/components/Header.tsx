@@ -1,10 +1,14 @@
-import { Shield, GraduationCap, LogOut } from "lucide-react";
+import { Shield, GraduationCap, LogOut, User, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const { profile, isAdmin } = useProfile();
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -51,7 +55,9 @@ export function Header() {
             <div className="clay-card p-4 text-center">
               <div className="flex items-center gap-2 text-primary mb-1">
                 <Shield className="w-5 h-5" />
-                <span className="font-semibold">Administrator Portal</span>
+                <span className="font-semibold">
+                  {isAdmin() ? 'Administrator Portal' : 'User Portal'}
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
                 {new Date().toLocaleDateString('en-US', { 
@@ -61,20 +67,43 @@ export function Header() {
                   day: 'numeric' 
                 })}
               </p>
-              {user && (
+              {user && profile && (
                 <div className="border-t border-border pt-2 mt-2">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {user.email}
-                  </p>
-                  <Button
-                    onClick={handleSignOut}
-                    size="sm"
-                    variant="outline"
-                    className="clay-card text-xs h-7"
-                  >
-                    <LogOut className="w-3 h-3 mr-1" />
-                    Sign Out
-                  </Button>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <p className="text-xs text-muted-foreground">
+                      {profile.full_name || user.email}
+                    </p>
+                    <Badge variant={isAdmin() ? "default" : "secondary"} className="text-xs">
+                      {isAdmin() ? 'Admin' : 'User'}
+                    </Badge>
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="clay-card text-xs h-7"
+                      >
+                        <User className="w-3 h-3 mr-1" />
+                        Account
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem className="text-xs">
+                        <Settings className="w-3 h-3 mr-2" />
+                        Profile Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={handleSignOut}
+                        className="text-xs text-destructive focus:text-destructive"
+                      >
+                        <LogOut className="w-3 h-3 mr-2" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
             </div>
