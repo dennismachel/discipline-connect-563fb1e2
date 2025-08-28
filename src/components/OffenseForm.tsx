@@ -11,8 +11,10 @@ import { Calendar, AlertTriangle, Users, Clock } from "lucide-react";
 export interface OffenseRecord {
   id: string;
   date: string;
+  studentName: string;
   offenseType: string;
   studentGrade: string;
+  studentClass: string;
   suspensionDays: number;
   comments: string;
   timestamp: number;
@@ -37,20 +39,30 @@ const offenseTypes = [
 ];
 
 const grades = [
-  "6th Grade",
   "7th Grade", 
   "8th Grade",
   "9th Grade",
   "10th Grade",
-  "11th Grade",
-  "12th Grade"
+  "11th Grade"
+];
+
+const studentClasses = [
+  "Barbados",
+  "Cuba", 
+  "Dominica",
+  "Grenada",
+  "Jamaica",
+  "St. Lucia",
+  "Trinidad & Tobago"
 ];
 
 export function OffenseForm({ onAddOffense }: OffenseFormProps) {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
+    studentName: "",
     offenseType: "",
     studentGrade: "",
+    studentClass: "",
     suspensionDays: 0,
     comments: ""
   });
@@ -60,7 +72,7 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.offenseType || !formData.studentGrade) {
+    if (!formData.offenseType || !formData.studentGrade || !formData.studentName || !formData.studentClass) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -72,8 +84,10 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
     const newOffense: OffenseRecord = {
       id: crypto.randomUUID(),
       date: formData.date,
+      studentName: formData.studentName,
       offenseType: formData.offenseType,
       studentGrade: formData.studentGrade,
+      studentClass: formData.studentClass,
       suspensionDays: formData.suspensionDays,
       comments: formData.comments,
       timestamp: Date.now()
@@ -84,8 +98,10 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
     // Reset form
     setFormData({
       date: new Date().toISOString().split('T')[0],
+      studentName: "",
       offenseType: "",
       studentGrade: "",
+      studentClass: "",
       suspensionDays: 0,
       comments: ""
     });
@@ -123,6 +139,24 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="studentName" className="flex items-center gap-2 text-sm font-medium">
+                <Users className="w-4 h-4" />
+                Student Name
+              </Label>
+              <Input
+                id="studentName"
+                type="text"
+                value={formData.studentName}
+                onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                className="clay-input"
+                placeholder="Enter student name"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <Label htmlFor="grade" className="flex items-center gap-2 text-sm font-medium">
                 <Users className="w-4 h-4" />
                 Student Grade
@@ -135,6 +169,25 @@ export function OffenseForm({ onAddOffense }: OffenseFormProps) {
                   {grades.map((grade) => (
                     <SelectItem key={grade} value={grade}>
                       {grade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="studentClass" className="flex items-center gap-2 text-sm font-medium">
+                <Users className="w-4 h-4" />
+                Student Class
+              </Label>
+              <Select onValueChange={(value) => setFormData({ ...formData, studentClass: value })}>
+                <SelectTrigger className="clay-input">
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {studentClasses.map((className) => (
+                    <SelectItem key={className} value={className}>
+                      {className}
                     </SelectItem>
                   ))}
                 </SelectContent>

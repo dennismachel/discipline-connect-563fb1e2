@@ -118,22 +118,30 @@ export function OffenseHistory({ offenses }: OffenseHistoryProps) {
                           <span className="font-semibold text-lg">{offense.offenseType}</span>
                         </div>
                         
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(offense.date)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {offense.studentGrade}
-                          </div>
-                          {offense.suspensionDays > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {offense.suspensionDays} day{offense.suspensionDays !== 1 ? 's' : ''} suspension
-                            </div>
-                          )}
-                        </div>
+                         <div className="mb-2">
+                           <p className="text-base font-medium text-foreground">{offense.studentName}</p>
+                         </div>
+                         
+                         <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
+                           <div className="flex items-center gap-1">
+                             <Calendar className="w-4 h-4" />
+                             {formatDate(offense.date)}
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <Users className="w-4 h-4" />
+                             {offense.studentGrade}
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <Users className="w-4 h-4" />
+                             {offense.studentClass}
+                           </div>
+                           {offense.suspensionDays > 0 && (
+                             <div className="flex items-center gap-1">
+                               <Clock className="w-4 h-4" />
+                               {offense.suspensionDays} day{offense.suspensionDays !== 1 ? 's' : ''} suspension
+                             </div>
+                           )}
+                         </div>
 
                         {offense.comments && (
                           <div className="flex items-start gap-2 mt-3">
