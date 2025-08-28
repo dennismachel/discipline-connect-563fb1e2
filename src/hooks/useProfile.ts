@@ -35,7 +35,7 @@ export const useProfile = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -50,9 +50,30 @@ export const useProfile = () => {
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user || !profile) return { error: new Error('No user or profile found') };
+    if (!user) return { error: new Error('No user found') };
 
     try {
+      // If no profile exists, create one first
+      if (!profile) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            ...updates
+          })
+          .select()
+          .single();
+
+        if (error) {
+          return { error };
+        }
+
+        setProfile(data);
+        return { data, error: null };
+      }
+
+      // Otherwise update existing profile
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
