@@ -2,41 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Claymorphism Design System - Soft, puffy UI elements with gentle shadows and pastel colors */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Claymorphism Background Gradients */
+    --background: 220 15% 96%;
+    --background-gradient: linear-gradient(135deg, hsl(220, 15%, 98%) 0%, hsl(210, 20%, 94%) 100%);
+    --foreground: 220 20% 20%;
 
+    /* Clay Card Colors */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 220 20% 20%;
+    --card-shadow: 0 8px 32px hsla(220, 15%, 70%, 0.3), inset 0 2px 4px hsla(0, 0%, 100%, 0.9);
+    
+    /* Popover Elements */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 20% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary Clay - Mint Green */
+    --primary: 150 40% 70%;
+    --primary-foreground: 150 20% 15%;
+    --primary-glow: 150 45% 80%;
+    --primary-shadow: 0 6px 20px hsla(150, 40%, 70%, 0.3), inset 0 1px 2px hsla(150, 60%, 85%, 0.8);
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary Clay - Lavender */
+    --secondary: 270 35% 80%;
+    --secondary-foreground: 270 20% 20%;
+    --secondary-glow: 270 40% 88%;
+    --secondary-shadow: 0 6px 20px hsla(270, 35%, 80%, 0.3), inset 0 1px 2px hsla(270, 50%, 90%, 0.8);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted Clay - Soft Gray */
+    --muted: 220 15% 88%;
+    --muted-foreground: 220 15% 35%;
+    --muted-shadow: 0 4px 16px hsla(220, 15%, 70%, 0.2), inset 0 1px 2px hsla(220, 20%, 95%, 0.9);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent Clay - Baby Blue */
+    --accent: 200 50% 80%;
+    --accent-foreground: 200 30% 15%;
+    --accent-glow: 200 55% 88%;
+    --accent-shadow: 0 6px 20px hsla(200, 50%, 80%, 0.3), inset 0 1px 2px hsla(200, 60%, 90%, 0.8);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive Clay - Soft Pink */
+    --destructive: 350 40% 75%;
+    --destructive-foreground: 350 20% 15%;
+    --destructive-shadow: 0 6px 20px hsla(350, 40%, 75%, 0.3), inset 0 1px 2px hsla(350, 50%, 85%, 0.8);
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Input Elements */
+    --border: 220 20% 85%;
+    --input: 220 15% 92%;
+    --input-shadow: inset 0 2px 8px hsla(220, 15%, 60%, 0.2), 0 1px 2px hsla(0, 0%, 100%, 0.9);
+    --ring: 150 40% 70%;
 
-    --radius: 0.5rem;
+    /* Border Radius */
+    --radius: 20px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +121,102 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    background: var(--background-gradient);
+    @apply text-foreground min-h-screen;
+  }
+}
+
+@layer components {
+  /* Claymorphism Button Variants */
+  .clay-primary {
+    @apply bg-primary text-primary-foreground rounded-[--radius-lg] transition-all duration-300;
+    box-shadow: var(--primary-shadow);
+  }
+  
+  .clay-primary:hover {
+    @apply bg-primary-glow transform scale-[1.02];
+    box-shadow: 0 8px 25px hsla(150, 40%, 70%, 0.4), inset 0 1px 3px hsla(150, 60%, 85%, 0.9);
+  }
+
+  .clay-secondary {
+    @apply bg-secondary text-secondary-foreground rounded-[--radius-lg] transition-all duration-300;
+    box-shadow: var(--secondary-shadow);
+  }
+  
+  .clay-secondary:hover {
+    @apply bg-secondary-glow transform scale-[1.02];
+    box-shadow: 0 8px 25px hsla(270, 35%, 80%, 0.4), inset 0 1px 3px hsla(270, 50%, 90%, 0.9);
+  }
+
+  .clay-accent {
+    @apply bg-accent text-accent-foreground rounded-[--radius-lg] transition-all duration-300;
+    box-shadow: var(--accent-shadow);
+  }
+  
+  .clay-accent:hover {
+    @apply bg-accent-glow transform scale-[1.02];
+    box-shadow: 0 8px 25px hsla(200, 50%, 80%, 0.4), inset 0 1px 3px hsla(200, 60%, 90%, 0.9);
+  }
+
+  .clay-destructive {
+    @apply bg-destructive text-destructive-foreground rounded-[--radius-lg] transition-all duration-300;
+    box-shadow: var(--destructive-shadow);
+  }
+  
+  .clay-destructive:hover {
+    @apply transform scale-[1.02];
+    box-shadow: 0 8px 25px hsla(350, 40%, 75%, 0.4), inset 0 1px 3px hsla(350, 50%, 85%, 0.9);
+  }
+
+  /* Claymorphism Card */
+  .clay-card {
+    @apply bg-card text-card-foreground rounded-[--radius-xl] transition-all duration-300;
+    box-shadow: var(--card-shadow);
+  }
+  
+  .clay-card:hover {
+    @apply transform translate-y-[-2px];
+    box-shadow: 0 12px 40px hsla(220, 15%, 70%, 0.4), inset 0 2px 6px hsla(0, 0%, 100%, 0.9);
+  }
+
+  /* Claymorphism Input */
+  .clay-input {
+    @apply bg-input border-border rounded-[--radius] transition-all duration-300;
+    box-shadow: var(--input-shadow);
+  }
+  
+  .clay-input:focus {
+    @apply ring-2 ring-ring ring-offset-2;
+    box-shadow: inset 0 2px 8px hsla(220, 15%, 60%, 0.3), 0 0 0 2px hsl(var(--ring));
+  }
+
+  /* Claymorphism Badge */
+  .clay-badge {
+    @apply rounded-[--radius] px-3 py-1 text-sm font-medium transition-all duration-300;
+  }
+  
+  .clay-badge-success {
+    @apply bg-primary-glow text-primary-foreground;
+    box-shadow: 0 2px 8px hsla(150, 40%, 70%, 0.3), inset 0 1px 2px hsla(150, 60%, 85%, 0.8);
+  }
+  
+  .clay-badge-warning {
+    @apply bg-accent-glow text-accent-foreground;
+    box-shadow: 0 2px 8px hsla(200, 50%, 80%, 0.3), inset 0 1px 2px hsla(200, 60%, 90%, 0.8);
+  }
+  
+  .clay-badge-danger {
+    @apply bg-destructive text-destructive-foreground;
+    box-shadow: 0 2px 8px hsla(350, 40%, 75%, 0.3), inset 0 1px 2px hsla(350, 50%, 85%, 0.8);
+  }
+
+  /* Floating Animation */
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
   }
 }
