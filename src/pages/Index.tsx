@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { OffenseForm, OffenseRecord } from "@/components/OffenseForm";
 import { OffenseHistory } from "@/components/OffenseHistory";
 import { ProfileSetup } from "@/components/ProfileSetup";
+import { SSLSeal } from "@/components/SSLSeal";
 import { useProfile } from "@/hooks/useProfile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, History, BookOpen, Shield, UserCheck } from "lucide-react";
@@ -132,6 +133,11 @@ const Index = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* SSL Trust Seal */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <SSLSeal />
+        </div>
       </main>
     </div>
   );
