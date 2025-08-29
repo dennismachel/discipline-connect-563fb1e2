@@ -34,7 +34,7 @@ export function Header() {
               <div className="relative">
                 <div className="w-20 h-20 md:w-24 md:h-24 clay-card flex items-center justify-center float-animation">
                   <img 
-                    src="/lovable-uploads/35358004-8298-45c7-8627-ce6281d9e738.png" 
+                    src="/lovable-uploads/e9ece142-d5a0-4afb-b5ba-bfa8adde4348.png" 
                     alt="Denbigh High School Logo" 
                     className="w-16 h-16 md:w-20 md:h-20 object-contain"
                   />
